@@ -1,12 +1,16 @@
 package com.example.android.bluetoothlegatt;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -97,7 +101,7 @@ public class MainActivity extends Activity {
     //                        or notification operations.
     private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void onReceive(Context context, final Intent intent) {
             final String action = intent.getAction();
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
 
@@ -128,12 +132,19 @@ public class MainActivity extends Activity {
 
                             LinearLayout linearLayout = (LinearLayout) findViewById(R.id.LinearLayout_bledevices);
                             TextView valueTV = new TextView(getApplication());
+                            valueTV.setTextColor(Color.BLACK);
                             valueTV.setLayoutParams(new LinearLayout.LayoutParams(
                                     LinearLayout.LayoutParams.WRAP_CONTENT,
                                     LinearLayout.LayoutParams.WRAP_CONTENT));
                             linearLayout.addView(valueTV);
                             TextView_HashMap.put(intent.getStringExtra(BluetoothLeService.EXTRA_DATA_C), valueTV);
-
+                            valueTV.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    // change text of the TextView (tvOut)
+                                    startControlActivity(intent.getStringExtra(BluetoothLeService.EXTRA_DATA_C));
+                                }
+                            });
 
                 }
             }
@@ -154,4 +165,20 @@ public class MainActivity extends Activity {
 
         startActivity(new Intent(this, DeviceScanActivity.class));
     }
+
+    public void startControlActivity(String MACaddress) {
+        mBluetoothLeService.close(MACaddress);
+        final BluetoothManager bluetoothManager =
+                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        BluetoothAdapter mBluetoothAdapter = bluetoothManager.getAdapter();
+
+        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(MACaddress);
+        if (device == null) return;
+        final Intent intent = new Intent(this, DeviceControlActivity.class);
+        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_NAME, device.getName());
+        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+        startActivity(intent);
+    }
+
+
 }

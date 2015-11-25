@@ -285,6 +285,7 @@ public class BluetoothLeService extends Service {
         if (mBluetoothGatt == null) {
             return;
         }
+        BLEDevice_BLEGatt_HashMap.remove(device);
         mBluetoothGatt.close();
         mBluetoothGatt = null;
     }
